@@ -15,6 +15,9 @@ export class Users {
     email: string;
 
     @Prop()
+    password: string;
+
+    @Prop()
     phone: number;
 
     @Prop()
@@ -23,23 +26,23 @@ export class Users {
     @Prop()
     image: string;
 
-    @Prop()
-    account_type: number;
+    @Prop({ default: "LOCAL" })
+    accountType: string;
+
+    @Prop({ default: "USERS" })
+    role: string;
+
+    @Prop({ default: false })
+    isActive: boolean;
 
     @Prop()
-    role: number;
+    codeId: number;
 
     @Prop()
-    is_active: boolean;
+    codeExpired: number;
 
     @Prop()
-    code_id: number;
-
-    @Prop()
-    code_expired: number;
-
-    @Prop()
-    restaurant_id: number;
+    restaurantId: number;
 }
 
 export const UsersSchema = SchemaFactory.createForClass(Users);

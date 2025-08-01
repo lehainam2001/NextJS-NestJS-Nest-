@@ -9,7 +9,7 @@ export class Like {
     id: number;
 
     @Prop()
-    restaurant_id: number;
+    restaurantId: number;
 }
 
 export const LikeSchema = SchemaFactory.createForClass(Like);

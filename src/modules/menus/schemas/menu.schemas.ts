@@ -9,7 +9,7 @@ export class Menus {
     id: number;
 
     @Prop()
-    restaurant_id: number;
+    restaurantId: number;
 
     @Prop()
     title: string;

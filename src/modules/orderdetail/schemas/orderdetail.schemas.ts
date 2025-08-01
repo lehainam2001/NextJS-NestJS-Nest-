@@ -9,16 +9,16 @@ export class OrderDetail {
     id: number;
 
     @Prop()
-    order_id: number;
+    orderId: number;
 
     @Prop()
-    menu_id: number;
+    menuId: number;
 
     @Prop()
-    menu_item_id: number;
+    menuItemId: number;
 
     @Prop()
-    menu_item_option_id: number;
+    menuItemOptionId: number;
 }
 
 export const OrderDetailSchema = SchemaFactory.createForClass(OrderDetail);

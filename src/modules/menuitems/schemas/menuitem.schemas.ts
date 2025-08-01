@@ -9,7 +9,7 @@ export class Menuitems {
     id: number;
 
     @Prop()
-    menu_id: number;
+    menuId: number;
 
     @Prop()
     title: string;
@@ -18,7 +18,7 @@ export class Menuitems {
     description: string;
 
     @Prop()
-    base_price: number;
+    basePrice: number;
 
     @Prop()
     image: string;

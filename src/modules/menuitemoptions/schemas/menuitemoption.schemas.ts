@@ -9,16 +9,16 @@ export class Menuitemoptions {
     id: number;
 
     @Prop()
-    menu_item_id: number;
+    menuItemId: number;
 
     @Prop()
     title: string;
 
     @Prop()
-    additional_price: number;
+    additionalPrice: number;
 
     @Prop()
-    optional_description: string;
+    optionalDescription: string;
 }
 
 export const MenuitemoptionsSchema = SchemaFactory.createForClass(Menuitemoptions);

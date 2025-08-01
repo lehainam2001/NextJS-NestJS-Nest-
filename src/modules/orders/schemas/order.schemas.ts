@@ -9,22 +9,22 @@ export class Orders {
     id: number;
 
     @Prop()
-    user_id: number;
+    userId: number;
 
     @Prop()
-    restaurant_id: number;
+    restaurantId: number;
 
     @Prop()
-    total_price: number;
+    totalPrice: number;
 
     @Prop()
     status: number;
 
     @Prop()
-    order_time: string;
+    orderTime: string;
 
     @Prop()
-    delivery_time: string;
+    deliveryTime: string;
 }
 
 export const OrdersSchema = SchemaFactory.createForClass(Orders);
