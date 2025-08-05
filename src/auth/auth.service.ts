@@ -2,6 +2,7 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { comparePasswordHelper } from 'src/helpers/util';
 import { UsersService } from 'src/modules/users/users.service';
 import { JwtService } from '@nestjs/jwt';
+import { CreateAuthDto } from 'src/auth/dto/create-auth.dto';
 
 @Injectable()
 export class AuthService {
@@ -38,4 +39,7 @@ export class AuthService {
     };
   }
 
+  handRegister = async (registerDto: CreateAuthDto) => {
+    return await this.usersService.handleRegister(registerDto)
+  }
 }
