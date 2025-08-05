@@ -12,6 +12,7 @@ import { OrdersModule } from 'src/modules/orders/orders.module';
 import { OrderdetailModule } from 'src/modules/orderdetail/orderdetail.module';
 import { RestaurantsModule } from 'src/modules/restaurants/restaurants.module';
 import { ReviewsModule } from 'src/modules/reviews/reviews.module';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -32,7 +33,8 @@ import { ReviewsModule } from 'src/modules/reviews/reviews.module';
         uri: configService.get<string>('MONGODB_URI'),
       }),
       inject: [ConfigService],
-    })
+    }),
+    AuthModule
   ],
   controllers: [AppController],
   providers: [AppService],
