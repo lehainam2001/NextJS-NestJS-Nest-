@@ -7,11 +7,14 @@ import { Users } from 'src/modules/users/schemas/user.schemas';
 import { hasPasswordHelper } from 'src/helpers/util';
 import mongoose from 'mongoose';
 import aqp from 'api-query-params';
-import { CreateAuthDto } from 'src/auth/dto/create-auth.dto';
+import { ChangePasswordAuthDto, CodeAuthDto, CreateAuthDto } from 'src/auth/dto/create-auth.dto';
 import { v4 as uuidv4 } from 'uuid';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
+import { MailerService } from '@nestjs-modules/mailer';
+import { Exception } from 'handlebars';
+import passport from 'passport';
 
 //extend activate plugin
 dayjs.extend(utc);
@@ -20,7 +23,10 @@ dayjs.extend(timezone);
 @Injectable()
 export class UsersService {
   constructor(
-    @InjectModel(Users.name) private userModule: Model<Users>
+    @InjectModel(Users.name)
+    private userModule: Model<Users>,
+
+    private readonly mailerService: MailerService,
   ) { }
 
   isEmailExist = async (email: string) => {
@@ -70,7 +76,15 @@ export class UsersService {
       .skip(skip)
       .select("-password") // Remove password
       .sort(sort as any)
-    return { results, totalPages };
+    return {
+      meta: {
+        current: current,
+        pageSize: pageSize,
+        pages: totalPages,
+        total: totalItem
+      },
+      results
+    };
   }
 
   findOne(id: number) {
@@ -106,20 +120,134 @@ export class UsersService {
 
     // has password
     const hashPassword = await hasPasswordHelper(password);
+    const codeId = uuidv4();
     const user = await this.userModule.create({
       name, email, password: hashPassword,
       isActive: false,
-      codeId: uuidv4(),
-      codeExpired: dayjs().tz('Asia/Ho_Chi_Minh').add(1, 'minute').toDate() // thời gian hết hạn
+      codeId: codeId,
+      codeExpired: dayjs().add(5, 'minutes') // Expiry time
     })
 
+    // send email
+    this.mailerService.sendMail({
+      to: user.email, // list of receivers
+      subject: 'Active your account ai NamLH', // Subject line
+      template: "register",
+      context: {
+        name: user?.name ?? user.email,
+        activationCode: user.codeId
+      }
+    })
+
+    // give feedback
     return {
       _id: user._id
     }
+  }
 
-    // give feedback
+  async handleActive(data: CodeAuthDto) {
+    const user = await this.userModule.findOne({
+      _id: data._id,
+      codeId: data.code
+    })
+    if (!user) {
+      throw new BadRequestException("Mã code không hợp lệ hoặc đã quá thời gian");
+    }
+    const isBeforeCheck = dayjs().isBefore(user.codeExpired);
+    // update user
+    if (isBeforeCheck) {
+      await this.userModule.updateOne({ _id: data._id }, {
+        isActive: true
+      })
+    } else {
+      throw new BadRequestException("Mã code không hợp lệ hoặc đã quá thời gian")
+    }
+    return data;
+  }
 
-    // send email
+  async retryActive(email: string) {
+    const user = await this.userModule.findOne({ email });
 
+    if (!user) {
+      throw new BadRequestException("Tài khoản không tồn lại")
+    }
+
+    if (user.isActive) {
+      throw new BadRequestException("Tài khoản đã được kích hoạt")
+    }
+
+    //update user
+    const codeId = uuidv4();
+    await user.updateOne({
+      codeId: codeId,
+      codeExpired: dayjs().add(5, 'minutes') // Expiry time
+    })
+
+    //send email
+    this.mailerService.sendMail({
+      to: user.email, // list of receivers
+      subject: 'Active your account ai NamLH', // Subject line
+      template: "register",
+      context: {
+        name: user?.name ?? user.email,
+        activationCode: codeId
+      }
+    })
+
+    return { _id: user._id }
+  }
+
+  async retryPassword(email: string) {
+    const user = await this.userModule.findOne({ email });
+
+    if (!user) {
+      throw new BadRequestException("Tài khoản không tồn lại")
+    }
+
+    //update user
+    const codeId = uuidv4();
+
+    await user.updateOne({
+      codeId: codeId,
+      codeExpired: dayjs().add(5, 'minutes') // Expiry time
+    })
+
+    //send email
+    this.mailerService.sendMail({
+      to: user.email, // list of receivers
+      subject: 'Change your password account at NamLH', // Subject line
+      template: "register",
+      context: {
+        name: user?.name ?? user.email,
+        activationCode: codeId
+      }
+    })
+
+    return { _id: user._id, email: user.email }
+  }
+
+  async changePassword(data: ChangePasswordAuthDto) {
+    if (data.comfirmPassword !== data.password) {
+      throw new BadRequestException("Mật khẩu/xác nhận mật khẩu không chính xác!")
+    }
+
+    const user = await this.userModule.findOne({ email: data.email });
+
+    if (!user) {
+      throw new BadRequestException("Tài khoản không tồn lại")
+    }
+
+    const isBeforeCheck = dayjs().isBefore(user.codeExpired);
+    // update password
+    if (isBeforeCheck) {
+      const newPassword = await hasPasswordHelper(data?.password);
+      await user.updateOne();
+      await this.userModule.updateOne({ password: newPassword }, {
+        isActive: true
+      })
+      return { isBeforeCheck }
+    } else {
+      throw new BadRequestException("Mã code không hợp lệ hoặc đã quá thời gian")
+    }
   }
 }
